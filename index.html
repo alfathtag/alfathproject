@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Barang Bekas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: linear-gradient(to right, #74ebd5, #ACB6E5);
+      color: #333;
+    }
+
+    h1, h3 {
+      text-align: center;
+      color: #fff;
+    }
+
+    .category-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+    }
+
+    .category-item {
+      display: flex;
+      justify-content: space-between;
+      width: 80%;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #fff;
+      border-radius: 10px;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .category-item:hover {
+      transform: scale(1.05);
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #undo {
+      margin-top: 20px;
+      background-color: #f44336;
+    }
+
+    #undo:hover {
+      background-color: #d32f2f;
+    }
+
+    #hasilPerhitungan {
+      margin-top: 20px;
+    }
+
+    input {
+      padding: 10px;
+      width: 80%;
+      max-width: 300px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+      font-size: 1.1em;
+      transition: border-color 0.3s ease;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+    }
+
+    input:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+
+    #waButton {
+      padding: 12px 20px;
+      background-color: #25d366;
+      color: white;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    #waButton:hover {
+      background-color: #1ebd57;
+    }
+
+  </style>
+</head>
+<body>
+
+  <h1>Aplikasi Pengolahan Barang Bekas</h1>
+
+  <!-- Kategori Barang Bekas -->
+  <div id="kategori" class="category-container">
+    <div class="category-item">
+      <span>Plastik</span>
+      <button onclick="pilihKategori('Plastik')">Pilih</button>
+    </div>
+    <div class="category-item">
+      <span>Kain</span>
+      <button onclick="pilihKategori('Kain')">Pilih</button>
+    </div>
+    <div class="category-item">
+      <span>Karet/Kulit</span>
+      <button onclick="pilihKategori('Karet/Kulit')">Pilih</button>
+    </div>
+  </div>
+
+  <!-- Pilihan Tindakan -->
+  <div id="menuTindakan" class="action-buttons hidden">
+    <h3>Pilih Tindakan:</h3>
+    <button onclick="handleAction('beli_produk')">Beli Produk Hasil Daur Ulang</button>
+    <button onclick="handleAction('jual_bekas')">Jual Barang Bekas</button>
+    <button onclick="handleAction('beli_bekas')">Beli Barang Bekas</button>
+    <button id="undo" onclick="undo()">Kembali</button>
+  </div>
+
+  <!-- Produk Berdasarkan Bahan -->
+  <div id="productDisplay" class="hidden">
+    <h3>Produk dari Bahan:</h3>
+    <div id="produk-container"></div>
+    <button id="undo" onclick="undo()">Kembali</button>
+  </div>
+
+  <!-- Kalkulator -->
+  <div id="kalkulator" class="hidden">
+    <h3>Kalkulator Perhitungan</h3>
+    <p id="namaProdukTerpilih"></p>
+
+    <label for="jumlahBarang">Jumlah Barang:</label>
+    <input type="number" id="jumlahBarang" placeholder="Masukkan jumlah barang" value="1">
+
+    <label for="hargaPerBarang">Harga per Barang (Rp):</label>
+    <input type="number" id="hargaPerBarang" readonly>
+
+    <label for="modal">Modal (Rp):</label>
+    <input type="number" id="modal" placeholder="Masukkan modal" value="0">
+
+    <button onclick="hitungTotal()">Hitung Total</button>
+
+    <div id="hasilPerhitungan"></div>
+
+    <button id="waButton" class="wa-button hidden">Pesan via WhatsApp</button>
+  </div>
+
+  <script>
+    var kategoriTerpilih = '';
+    var produkTerpilih = '';
+    var hargaTerpilih = 0;
+
+    const produkMap = {
+      'Plastik': { nama: 'Pot Tanaman', harga: 25000 },
+      'Kain': { nama: 'Tas Serut', harga: 50000 },
+      'Karet/Kulit': { nama: 'Gelang Karet', harga: 10000 }
+    };
+
+    function pilihKategori(kategori) {
+      kategoriTerpilih = kategori;
+      document.getElementById('kategori').classList.add('hidden');
+      document.getElementById('menuTindakan').classList.remove('hidden');
+    }
+
+    function handleAction(action) {
+      document.getElementById('menuTindakan').classList.add('hidden');
+      
+      if (action === 'beli_produk') {
+        const produk = produkMap[kategoriTerpilih];
+        document.getElementById('produk-container').innerHTML = `
+          <div>
+            <span>${produk.nama} - Rp${produk.harga}</span>
+            <button onclick="pilihProduk('${produk.nama}', ${produk.harga})">Pesan</button>
+          </div>
+        `;
+        document.getElementById('productDisplay').classList.remove('hidden');
+      } else {
+        document.getElementById('kalkulator').classList.remove('hidden');
+        document.getElementById('hargaPerBarang').value = 5000; // Harga default barang bekas per kg
+      }
+    }
+
+    function pilihProduk(namaProduk, harga) {
+      produkTerpilih = namaProduk;
+      hargaTerpilih = harga;
+
+      document.getElementById('productDisplay').classList.add('hidden');
+      document.getElementById('kalkulator').classList.remove('hidden');
+      document.getElementById('namaProdukTerpilih').innerText = 'Produk Terpilih: ' + produkTerpilih;
+      document.getElementById('hargaPerBarang').value = hargaTerpilih;
+    }
+
+    function hitungTotal() {
+      var jumlahBarang = document.getElementById('jumlahBarang').value;
+      var hargaPerBarang = document.getElementById('hargaPerBarang').value;
+      var modal = document.getElementById('modal').value;
+
+      var totalHarga = jumlahBarang * hargaPerBarang;
+      var keuntungan = totalHarga - modal;
+      
+      document.getElementById('hasilPerhitungan').innerHTML = `
+        <p>Total Harga: Rp${totalHarga}</p>
+        <p>Keuntungan: Rp${keuntungan}</p>
+      `;
+
+      document.getElementById('waButton').classList.remove('hidden');
+      document.getElementById('waButton').onclick = function() {
+        kirimWhatsApp(totalHarga, keuntungan);
+      };
+    }
+
+    function kirimWhatsApp(totalHarga, keuntungan) {
+      var pesan = `Halo, saya ingin memesan ${produkTerpilih}. Total harga: Rp${totalHarga}. Keuntungan: Rp${keuntungan}.`;
+      var nomorWhatsApp = '6282173067671'; // Nomor WhatsApp yang dituju
+      var url = `https://wa.me/${nomorWhatsApp}?text=${encodeURIComponent(pesan)}`;
+      window.open(url, '_blank');
+    }
+
+    function undo() {
+      document.getElementById('kategori').classList.remove('hidden');
+      document.getElementById('menuTindakan').classList.add('hidden');
+      
+      document.getElementById('productDisplay').classList.add('hidden');
+document.getElementById('hasilPerhitungan').innerHTML = '';
+document.getElementById('waButton').classList.add('hidden');
+}
+</script>
+
+</body>
+</html>
